@@ -9,7 +9,30 @@
 <body>
   <main>
     <h1>Course Exchange Assistant</h1>
-    <p id="status">Checking server...</p>
+    <p class="intro">Tell us what you need to cover, and we'll suggest exchange courses with a source for each one.</p>
+
+    <form id="match-form">
+      <label>Home university
+        <input name="home_university" required>
+      </label>
+      <label>Exchange university
+        <input name="exchange_university" required>
+      </label>
+      <label>Home courses I need to cover <span class="hint">(one per line)</span>
+        <textarea name="home_courses" rows="4" required></textarea>
+      </label>
+      <label>Credits I need (ECTS)
+        <input name="credits_needed" type="number" min="1" step="0.5" required>
+      </label>
+      <label>Question <span class="hint">(optional)</span>
+        <input name="question" placeholder="e.g. Which courses are taught in English?">
+      </label>
+      <button type="submit">Find matching courses</button>
+    </form>
+
+    <p id="message" role="status"></p>
+    <p id="summary"></p>
+    <section id="results"></section>
   </main>
   <script src="app.js"></script>
 </body>

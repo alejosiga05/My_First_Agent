@@ -1,0 +1,36 @@
+{
+  "matches": [
+    {
+      "exchange_course": "Machine Learning Fundamentals (CS-310)",
+      "ects": 6,
+      "home_course": "Introduction to Machine Learning",
+      "reason": "Covers the same topics: regression, classification, model evaluation.",
+      "source": "data/courses/sample_exchange_catalogue.md",
+      "sure": true
+    },
+    {
+      "exchange_course": "Database Systems (CS-220)",
+      "ects": 6,
+      "home_course": "Databases",
+      "reason": "Same core content: relational model, SQL and normalisation.",
+      "source": "data/courses/sample_exchange_catalogue.md",
+      "sure": true
+    },
+    {
+      "exchange_course": "Scientific Writing in English (LANG-105)",
+      "ects": 5,
+      "home_course": "Academic Writing",
+      "reason": "A past exchange student had it approved for Academic Writing.",
+      "source": "data/exchange/sample_student_report.md",
+      "sure": true
+    },
+    {
+      "exchange_course": "Data Engineering Project (CS-350)",
+      "ects": 6,
+      "home_course": "Databases",
+      "reason": "Uses databases but is mostly project work; overlap is unclear.",
+      "source": "data/courses/sample_home_syllabus.md",
+      "sure": false
+    }
+  ]
+}
