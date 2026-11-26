@@ -18,9 +18,10 @@
       <label>Exchange university
         <input name="exchange_university" required>
       </label>
-      <label>Home courses I need to cover <span class="hint">(one per line)</span>
-        <textarea name="home_courses" rows="4" required></textarea>
-      </label>
+      <fieldset id="home-courses">
+        <legend>Home courses I need to cover</legend>
+        <p class="hint">Loading courses...</p>
+      </fieldset>
       <label>Credits I need (ECTS)
         <input name="credits_needed" type="number" min="1" step="0.5" required>
       </label>

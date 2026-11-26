@@ -3,6 +3,7 @@ const button = form.querySelector("button");
 const messageEl = document.getElementById("message");
 const summaryEl = document.getElementById("summary");
 const resultsEl = document.getElementById("results");
+const homeCoursesEl = document.getElementById("home-courses");
 
 function addText(parent, tag, text, className) {
   const el = document.createElement(tag);
@@ -14,20 +15,22 @@ function addText(parent, tag, text, className) {
 
 function renderCard(match) {
   const card = document.createElement("article");
-  card.className = match.sure ? "card" : "card unsure";
+  card.className = `card label-${match.label}`;
 
-  if (!match.sure) addText(card, "span", "Not sure – ask your coordinator", "badge");
-  addText(card, "h2", match.exchange_course);
+  addText(card, "span", match.label_text, "badge");
+  addText(card, "h2", match.exchange_course || "No exchange course found");
   const ects = match.ects === null ? "ECTS not stated" : `${match.ects} ECTS`;
-  addText(card, "p", `${ects} · Matches: ${match.home_course}`, "meta");
-  addText(card, "p", match.reason);
+  addText(card, "p", `${ects} · For: ${match.home_course} (${match.home_ects} ECTS)`, "meta");
+  addText(card, "p", match.reason, match.model_error ? "model-error" : "");
 
-  const link = document.createElement("a");
-  link.href = "/" + match.source;
-  link.target = "_blank";
-  link.rel = "noopener";
-  link.textContent = "Source";
-  card.appendChild(link);
+  if (match.source_url) {
+    const link = document.createElement("a");
+    link.href = match.source_url;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = "Source";
+    card.appendChild(link);
+  }
 
   resultsEl.appendChild(card);
 }
@@ -45,14 +48,16 @@ form.addEventListener("submit", async (event) => {
   const body = {
     home_university: data.get("home_university").trim(),
     exchange_university: data.get("exchange_university").trim(),
-    home_courses: data
-      .get("home_courses")
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean),
+    home_courses: data.getAll("home_courses"),
     credits_needed: Number(data.get("credits_needed")),
     question: data.get("question").trim() || null,
   };
+
+  if (body.home_courses.length === 0) {
+    messageEl.className = "error";
+    messageEl.textContent = "Please choose at least one home course.";
+    return;
+  }
 
   button.disabled = true;
   messageEl.className = "";
@@ -83,3 +88,27 @@ form.addEventListener("submit", async (event) => {
     button.disabled = false;
   }
 });
+
+async function loadHomeCourses() {
+  const hint = homeCoursesEl.querySelector(".hint");
+  try {
+    const response = await fetch("/api/home-courses");
+    if (!response.ok) throw new Error(`Server error ${response.status}`);
+    const result = await response.json();
+    hint.remove();
+    result.home_courses.forEach((name) => {
+      const label = document.createElement("label");
+      label.className = "checkbox";
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.name = "home_courses";
+      box.value = name;
+      label.append(box, " " + name);
+      homeCoursesEl.appendChild(label);
+    });
+  } catch (err) {
+    hint.textContent = "Could not load home courses.";
+  }
+}
+
+loadHomeCourses();

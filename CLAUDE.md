@@ -4,7 +4,7 @@
 
 - Theory: students waste hours matching home and exchange courses; an LLM can read messy syllabi and exchange reports fast, but it invents details, so every course suggestion must cite a file in data/, and all credit maths is done in code.
 - User: university students choosing which courses to take on an exchange semester.
-- Done by 26 Nov: a student asks a question on the page and gets course suggestions with clickable sources from data/ and credit totals computed in Python; all tests pass.
+- Done by 1 Dec: a student asks a question on the page and gets course suggestions with clickable sources from data/ and credit totals computed in Python; all tests pass.
 
 ## How to run it (Windows, from repo root)
 
@@ -19,7 +19,7 @@
 - backend/main.py: the only entry point; serves frontend/ and the API on one port.
 - backend/llm.py: the only file that calls the model; it judges whether two courses match and returns the source it used.
 - backend/retrieval.py: search over data/; every result keeps the file it came from.
-- backend/recommender.py: ranking, credit (ECTS) totals and timetable clashes, in plain Python, using the matches from llm.py.
+- backend/recommender.py: ranking, credit (ECTS) totals and match labels, in plain Python, using the matches from llm.py.
 - frontend/: plain HTML, CSS and JavaScript. No framework, no build step.
 - data/courses/: syllabi and course catalogues. data/exchange/: partner-university info and past-student reports. Read them, never modify them.
 - tests/: every feature starts here with a failing test.

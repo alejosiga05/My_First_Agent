@@ -77,8 +77,37 @@ button:disabled {
   border-radius: 6px;
 }
 
-.card.unsure {
-  border-left-color: #d97706;
+.card.label-credit_gap {
+  border-left-color: #ca8a04;
+}
+
+.card.label-not_sure {
+  border-left-color: #ea580c;
+}
+
+.model-error {
+  font-style: italic;
+  color: #b42318;
+}
+
+fieldset {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid #bcccdc;
+  border-radius: 4px;
+}
+
+legend {
+  font-weight: 600;
+}
+
+label.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 400;
 }
 
 .card h2 {
@@ -100,7 +129,17 @@ button:disabled {
   padding: 0.15rem 0.5rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #92400e;
-  background: #fef3c7;
+  color: #166534;
+  background: #dcfce7;
   border-radius: 999px;
+}
+
+.label-credit_gap .badge {
+  color: #854d0e;
+  background: #fef9c3;
+}
+
+.label-not_sure .badge {
+  color: #9a3412;
+  background: #ffedd5;
 }
