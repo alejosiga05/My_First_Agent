@@ -1,17 +1,18 @@
 """FastAPI app: serves frontend/, /health, and the API, on one port."""
 
 import os
+from datetime import date
 from pathlib import Path
 from typing import Literal
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
 from backend import llm, retrieval
-from backend.recommender import build_card, summarize_credits
+from backend.recommender import build_card, compare_residences, summarize_credits
 
 load_dotenv()
 
@@ -21,6 +22,7 @@ DATA_DIR = ROOT_DIR / "data"
 COURSES_DIR = DATA_DIR / "courses"
 SECTION_DIRS = {"housing": DATA_DIR / "housing", "clubs": DATA_DIR / "clubs"}
 HOUSING_WEBSITES_FILE = DATA_DIR / "housing" / "bocconi_private_housing_websites.md"
+RESIDENCES_FILE = DATA_DIR / "housing" / "bocconi_exchange_residences_fall_2026.csv"
 CLUBS_LIST_FILE = DATA_DIR / "clubs" / "bocconi_student_associations_list.md"
 CLUBS_COMMUNITY_FILE = DATA_DIR / "clubs" / "bocconi_international_student_community.md"
 CLUBS_JOIN_FILE = DATA_DIR / "clubs" / "bocconi_how_to_join_associations.md"
@@ -112,6 +114,17 @@ def ask(request: AskRequest) -> dict:
 def housing_websites() -> dict:
     """Private-housing websites listed by Bocconi, parsed from the file. No model call."""
     return {**retrieval.housing_websites(HOUSING_WEBSITES_FILE), "disclaimer": WEBSITES_DISCLAIMER}
+
+
+@app.get("/api/housing/residences")
+def housing_residences(
+    max_budget: float | None = Query(None, ge=0),
+    within_5_min: bool = False,
+    until: date | None = None,
+) -> dict:
+    """Bocconi exchange residences with monthly prices, filtered in Python. No model call."""
+    rows = retrieval.exchange_residences(RESIDENCES_FILE)
+    return compare_residences(rows, max_budget, within_5_min, until)
 
 
 @app.get("/api/clubs/areas")

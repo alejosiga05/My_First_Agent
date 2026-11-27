@@ -65,6 +65,24 @@
     <section id="panel-housing" role="tabpanel" aria-labelledby="tab-housing" hidden>
       <p class="intro">Ask about housing in Milan. Answers come only from Bocconi housing pages, with sources.</p>
       <p class="warning semester-warning" hidden></p>
+      <section id="housing-residences" class="card info-card">
+        <h2>Compare Bocconi exchange residences</h2>
+        <form id="residences-form" class="residence-filters">
+          <label>Maximum monthly budget (€)
+            <input type="number" name="max_budget" min="0" step="1" placeholder="Any">
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" name="within_5_min" value="true"> Only within 5 minutes walk
+          </label>
+          <label>I need housing until
+            <input type="date" name="until">
+          </label>
+          <button type="submit">Compare</button>
+        </form>
+        <p class="warning residence-warning" hidden></p>
+        <p class="residence-message" role="status"></p>
+        <div class="table-wrap"></div>
+      </section>
       <section id="housing-websites" class="card info-card">
         <h2>Where to look for a flat</h2>
         <p class="hint">Loading websites...</p>

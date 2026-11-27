@@ -1,5 +1,7 @@
 """Search over data/ with citations: every result keeps its file and Source URL."""
 
+import csv
+import io
 import math
 import re
 from collections import Counter
@@ -242,6 +244,15 @@ def housing_websites(path: Path) -> dict:
         if match:
             websites.append({"name": match.group(1), "url": match.group(2)})
     return {"websites": websites, "source": _source(path, raw)}
+
+
+def exchange_residences(path: Path) -> list[dict]:
+    """Rows of the exchange-residences CSV as raw strings, each with the file it came from."""
+    raw = _read(path)
+    if raw is None:
+        return []
+    file = _relative(Path(path))
+    return [{**row, "file": file} for row in csv.DictReader(io.StringIO(raw))]
 
 
 def club_areas(path: Path) -> dict:

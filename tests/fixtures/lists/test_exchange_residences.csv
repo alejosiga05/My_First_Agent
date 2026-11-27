@@ -1,0 +1,4 @@
+residence,room_type,price_semester_eur,period_start,period_end,walking_time,bills_included,notes,source
+Test Near House,Single room (ensuite),4770,2026-08-24,2026-12-24,about 5 minutes walk to campus,yes,Test note,https://example.org/housing/residences
+Test Near House,Shared twin room (price per bed),3025,2026-08-24,2026-12-24,about 5 minutes walk to campus,yes,Test note,https://example.org/housing/residences
+Test Far Hall,Single room in apartment,4000,2026-08-24,2026-12-24,within 10-15 minutes walk,no,Test note,https://example.org/housing/residences

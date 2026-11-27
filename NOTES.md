@@ -79,8 +79,30 @@
     Courses and Housing tabs (fixed string in app.js; no data involved, so not in the backend).
   - Fixed line on the Courses tab: "All courses shown are taught in English. Course list: Bocconi Fall 2026
     catalogue; course descriptions from the 2025-26 course profiles." (the files' Note lines say 2025-2026).
+- 2026-11-27: "Compare Bocconi exchange residences" panel at the top of the Housing tab (above the websites
+  card, so "private housing websites below" is true). No model call.
+  - `GET /api/housing/residences?max_budget=&within_5_min=&until=` -> `{residences: [{residence, room_type,
+    monthly_price_eur, price_semester_eur, walking_time, period_text, bills_included, source}], date_warning,
+    message}`. `max_budget` must be >= 0 and `until` an ISO date, otherwise 422. The file is
+    `bocconi_exchange_residences_fall_2026.csv` (`RESIDENCES_FILE` in main.py), read by `retrieval.exchange_residences`.
+    All maths is in `recommender.compare_residences`.
+  - Months = whole calendar months from period_start to period_end (a partial last month is not counted; 24 Aug–24 Dec = 4).
+    Monthly price = semester / months, rounded **half-up** to whole euros (4770/4 = 1192.5 -> 1193; `round()` would
+    give 1192). Rows with a bad price or date, or with less than 1 month, are skipped.
+  - Budget: rows with monthly price > budget are hidden (equal is kept).
+  - "Within 5 minutes": the largest number before "minute" in `walking_time` must be <= 5
+    ("within 10-15 minutes" -> 15 -> excluded). Text with no number is excluded when the box is ticked.
+  - Date check: if `until` > the latest period_end, `date_warning` = "Exchange residences cover only <earliest start> –
+    <latest end> – look at the private housing websites below". Rows stay visible (user's choice). The dates are
+    formatted in Python with a fixed English month list.
+  - Nothing left after the filters gives "No Bocconi exchange residence fits – try the private housing websites". A missing
+    or empty file gives `residences: []` with no message, and the page shows "Not sure – this list is not available."
+  - Fixture: `tests/fixtures/lists/test_exchange_residences.csv`; tests in `tests/test_residences.py`.
 
 ## Open questions
+
+- The residences CSV covers Fall 2026 only (24 Aug – 24 Dec 2026). There is no Spring 2027 data. The Spring notice on the
+  Housing tab already says so, but the table itself still shows the Fall rows.
 
 - Europe and Global Megatrends has no obvious Bocconi counterpart among the 8 profiles; expect "not sure".
 - Housing data is a summary snapshot of Bocconi pages for Fall 2026-27; prices and dates change every year.

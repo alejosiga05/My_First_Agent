@@ -270,6 +270,60 @@ async function loadHousingWebsites() {
   }
 }
 
+// Exchange residences: prices, filters and the date check come from the backend; the page only shows them.
+const residencesForm = document.getElementById("residences-form");
+const residencesPanel = document.getElementById("housing-residences");
+const RESIDENCE_COLUMNS = [
+  ["Residence", (r) => r.residence],
+  ["Room type", (r) => r.room_type],
+  ["Monthly price", (r) => `€${r.monthly_price_eur}`],
+  ["Semester price", (r) => `€${r.price_semester_eur}`],
+  ["Walking time", (r) => r.walking_time],
+  ["Period", (r) => r.period_text],
+  ["Bills included", (r) => r.bills_included],
+];
+
+async function loadResidences() {
+  const warning = residencesPanel.querySelector(".residence-warning");
+  const message = residencesPanel.querySelector(".residence-message");
+  const tableWrap = residencesPanel.querySelector(".table-wrap");
+  const params = new URLSearchParams();
+  for (const [key, value] of new FormData(residencesForm)) {
+    if (value !== "") params.append(key, value);
+  }
+  tableWrap.replaceChildren();
+  warning.hidden = true;
+  message.textContent = "";
+  try {
+    const result = await getJson(`/api/housing/residences?${params}`);
+    warning.textContent = result.date_warning || "";
+    warning.hidden = !result.date_warning;
+    if (!result.residences.length) {
+      message.textContent = result.message || NOT_AVAILABLE;
+      return;
+    }
+    const table = document.createElement("table");
+    const head = table.createTHead().insertRow();
+    RESIDENCE_COLUMNS.forEach(([title]) => addText(head, "th", title));
+    addText(head, "th", "Source");
+    const body = table.createTBody();
+    result.residences.forEach((r) => {
+      const row = body.insertRow();
+      RESIDENCE_COLUMNS.forEach(([, value]) => addText(row, "td", value(r)));
+      const cell = addText(row, "td", "");
+      if (r.source) addLink(cell, r.source, "Source");
+    });
+    tableWrap.appendChild(table);
+  } catch (err) {
+    message.textContent = NOT_AVAILABLE;
+  }
+}
+
+residencesForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  loadResidences();
+});
+
 async function loadStartHere() {
   const panel = document.getElementById("clubs-start");
   const hint = panel.querySelector(".hint");
@@ -359,6 +413,7 @@ clubAreasForm.addEventListener("submit", (event) => {
   clubResults.appendChild(card);
 });
 
+loadResidences();
 loadHousingWebsites();
 loadStartHere();
 loadClubAreas();
