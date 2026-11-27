@@ -127,3 +127,62 @@ def test_no_matches_gives_zero_totals():
     assert summary["confirmed_ects"] == 0
     assert summary["not_sure_count"] == 0
     assert summary["remaining"] == 30
+
+
+MASTER_WARNING = "Master course – check with your coordinator"
+
+
+def exchange_with_level(level):
+    return Document(
+        file="data/courses/bocconi_m.md",
+        source_url="https://example.org/x",
+        course="Exchange Marketing",
+        ects=7.5,
+        side="exchange",
+        text="",
+        level=level,
+    )
+
+
+def test_bachelor_gets_warning_for_graduate_course():
+    card = build_card(judgment(True), HOME, exchange_with_level("Graduate"), study_level="Bachelor")
+
+    assert card["label"] == "match"
+    assert card["level_warning"] == MASTER_WARNING
+
+
+def test_master_level_line_also_counts_as_graduate():
+    card = build_card(judgment(True), HOME, exchange_with_level("Master"), study_level="Bachelor")
+
+    assert card["level_warning"] == MASTER_WARNING
+
+
+def test_master_student_gets_no_warning_for_graduate_course():
+    card = build_card(judgment(True), HOME, exchange_with_level("Graduate"), study_level="Master")
+
+    assert card["level_warning"] is None
+
+
+def test_bachelor_gets_no_warning_for_undergraduate_course():
+    card = build_card(judgment(True), HOME, exchange_with_level("Undergraduate"), study_level="Bachelor")
+
+    assert card["level_warning"] is None
+
+
+def test_no_warning_without_study_level():
+    card = build_card(judgment(True), HOME, exchange_with_level("Graduate"))
+
+    assert card["level_warning"] is None
+
+
+def test_no_warning_when_level_missing():
+    card = build_card(judgment(True), HOME, exchange_with_level(None), study_level="Bachelor")
+
+    assert card["level_warning"] is None
+
+
+def test_no_warning_on_not_sure_card():
+    card = build_card(judgment(False), HOME, exchange_with_level("Graduate"), study_level="Bachelor")
+
+    assert card["label"] == "not_sure"
+    assert card["level_warning"] is None

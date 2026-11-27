@@ -2,6 +2,7 @@ Source: https://example.org/bocconi/marketing
 University: Test Exchange University
 Course: Exchange Marketing
 ECTS: 6
+Level: Undergraduate
 
 # Exchange Marketing
 

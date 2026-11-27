@@ -6,14 +6,22 @@ NOT_SURE_TEXT = "Not sure – ask your coordinator"
 MATCH_TEXT = "Match"
 NO_CLEAR_MATCH_TEXT = "No clear match"
 CLOSEST_PREFIX = "Closest Bocconi course: "
+MASTER_WARNING = "Master course – check with your coordinator"
+GRADUATE_LEVELS = {"graduate", "master", "postgraduate"}
 
 
 def _fmt(value: float) -> str:
     return f"{value:g}"
 
 
-def build_card(judgment: dict, home: Document, exchange: Document | None) -> dict:
-    """Turn the model's content judgment into a card; label and ECTS come from the files."""
+def _is_graduate(level: str | None) -> bool:
+    return bool(level) and level.strip().lower() in GRADUATE_LEVELS
+
+
+def build_card(
+    judgment: dict, home: Document, exchange: Document | None, study_level: str | None = None
+) -> dict:
+    """Turn the model's content judgment into a card; label, ECTS and level warning come from the files."""
     if exchange is None or not judgment.get("content_match"):
         label, label_text = "not_sure", NOT_SURE_TEXT
     elif exchange.ects is None or home.ects is None:
@@ -34,6 +42,11 @@ def build_card(judgment: dict, home: Document, exchange: Document | None) -> dic
     else:
         title, closest_text = exchange.course, None
 
+    # Only a suggested course gets the warning; a missing or unknown Level line gives none.
+    level_warning = None
+    if label != "not_sure" and study_level == "Bachelor" and _is_graduate(exchange.level):
+        level_warning = MASTER_WARNING
+
     return {
         "label": label,
         "label_text": label_text,
@@ -45,6 +58,7 @@ def build_card(judgment: dict, home: Document, exchange: Document | None) -> dic
         "ects": exchange.ects if exchange else None,
         "reason": judgment.get("reason") or "",
         "model_error": bool(judgment.get("model_error")),
+        "level_warning": level_warning,
         "source_file": exchange.file if exchange else None,
         "source_url": exchange.source_url if exchange else None,
     }

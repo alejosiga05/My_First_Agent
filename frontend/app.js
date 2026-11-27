@@ -6,6 +6,9 @@ const resultsEl = document.getElementById("results");
 const homeCoursesEl = document.getElementById("home-courses");
 const homeUniversityEl = document.getElementById("home-university");
 const EXCHANGE_UNIVERSITY = "Bocconi University";
+const studyLevelEl = document.getElementById("study-level");
+const semesterEl = document.getElementById("semester");
+const SPRING_WARNING = "Our data covers Fall 2026 only – check the official Bocconi catalogue for Spring";
 let coursesByUniversity = {};
 
 function addText(parent, tag, text, className) {
@@ -29,6 +32,7 @@ function renderCard(match) {
     const ects = match.ects === null ? "ECTS not stated" : `${match.ects} ECTS`;
     addText(card, "p", `${ects} · For: ${match.home_course} (${match.home_ects} ECTS)`, "meta");
   }
+  if (match.level_warning) addText(card, "p", match.level_warning, "warning");
   addText(card, "p", match.reason, match.model_error ? "model-error" : "");
 
   if (match.source_url) {
@@ -61,6 +65,8 @@ form.addEventListener("submit", async (event) => {
     exchange_university: EXCHANGE_UNIVERSITY,
     home_courses: data.getAll("home_courses"),
     credits_needed: Number(data.get("credits_needed")),
+    study_level: studyLevelEl.value || null,
+    semester: semesterEl.value || null,
   };
 
   if (body.home_courses.length === 0) {
@@ -356,3 +362,15 @@ clubAreasForm.addEventListener("submit", (event) => {
 loadHousingWebsites();
 loadStartHere();
 loadClubAreas();
+
+// Exchange profile: a Spring semester only adds a notice on Courses and Housing; nothing is blocked.
+function renderSemesterWarning() {
+  const spring = semesterEl.value === "Spring 2027";
+  document.querySelectorAll(".semester-warning").forEach((el) => {
+    el.textContent = spring ? SPRING_WARNING : "";
+    el.hidden = !spring;
+  });
+}
+
+semesterEl.addEventListener("change", renderSemesterWarning);
+renderSemesterWarning();

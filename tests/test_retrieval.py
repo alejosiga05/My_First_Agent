@@ -125,3 +125,11 @@ def test_search_question_ranks_the_relevant_file_first():
     assert any("EUR 4,000" in c.text for c in chunks)
     sources = {d.file: d.source_url for d in docs}
     assert all(c.source_url == sources[c.file] for c in chunks)
+
+
+def test_level_line_is_parsed():
+    docs = docs_by_course()
+
+    assert docs["Exchange Advanced Econometrics"].level == "Graduate"
+    assert docs["Exchange Marketing"].level == "Undergraduate"
+    assert docs["Exchange Corporate Finance"].level is None

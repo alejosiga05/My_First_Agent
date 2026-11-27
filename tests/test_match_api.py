@@ -146,3 +146,39 @@ def test_non_positive_credits_is_rejected():
     body = {**VALID_REQUEST, "credits_needed": 0}
 
     assert post(body).status_code == 422
+
+
+def test_profile_is_optional_and_gives_no_warnings():
+    matches = post().json()["matches"]
+
+    assert all(m["level_warning"] is None for m in matches)
+
+
+def test_profile_values_are_accepted():
+    for level in ("Bachelor", "Master"):
+        for semester in ("Fall 2026", "Spring 2027"):
+            body = {**VALID_REQUEST, "study_level": level, "semester": semester}
+            assert post(body).status_code == 200
+
+
+def test_unknown_study_level_is_rejected():
+    assert post({**VALID_REQUEST, "study_level": "PhD"}).status_code == 422
+
+
+def test_unknown_semester_is_rejected():
+    assert post({**VALID_REQUEST, "semester": "Spring 2026"}).status_code == 422
+
+
+def test_bachelor_sees_warning_on_graduate_course(monkeypatch):
+    def fake_judge(home_doc, candidates):
+        judgment = {**JUDGMENTS[home_doc.course], "model_error": False}
+        if home_doc.course == "Test Corporate Finance":
+            judgment["source_file"] = "tests/fixtures/courses/bocconi_test_graduate.md"
+        return judgment
+
+    monkeypatch.setattr(llm, "judge_match", fake_judge)
+
+    by_home = {m["home_course"]: m for m in post({**VALID_REQUEST, "study_level": "Bachelor"}).json()["matches"]}
+
+    assert by_home["Test Corporate Finance"]["level_warning"] == "Master course – check with your coordinator"
+    assert by_home["Test Marketing"]["level_warning"] is None

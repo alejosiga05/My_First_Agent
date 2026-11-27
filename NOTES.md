@@ -69,6 +69,16 @@
     retrieval tests are unchanged.
 - 2026-11-27: `ANSWER_PROMPT` now says "If you name a website that appears in the text, include its URL
   exactly as written." The URL filter (`remove_unknown_urls`) is unchanged.
+- 2026-11-27: "Your exchange profile" step above the tabs: study level (Bachelor/Master) and semester
+  (Fall 2026/Spring 2027). Both optional, used only for warnings, never to filter or block results.
+  - `/api/match` accepts optional `study_level` and `semester` (other values 422). Each card has `level_warning`:
+    "Master course – check with your coordinator" when the student is Bachelor and the suggested course's
+    `Level:` line (parsed into `Document.level`) is Graduate/Master/Postgraduate. Only `match`/`credit_gap`
+    cards get it; a missing Level line gives no warning. `semester` is validated but not used by the backend.
+  - Spring 2027 shows "Our data covers Fall 2026 only – check the official Bocconi catalogue for Spring" on the
+    Courses and Housing tabs (fixed string in app.js; no data involved, so not in the backend).
+  - Fixed line on the Courses tab: "All courses shown are taught in English. Course list: Bocconi Fall 2026
+    catalogue; course descriptions from the 2025-26 course profiles." (the files' Note lines say 2025-2026).
 
 ## Open questions
 
@@ -77,3 +87,5 @@
   Who refreshes it, and when?
 - Answers in the Housing/Clubs tabs are not yet evaluated beyond the 6 suggested questions (checked by hand
   on 2026-11-27 with the real model).
+- All 8 real Bocconi course files say `Level: Undergraduate`, so the Master warning never shows on real data
+  today; it is only covered by the `bocconi_test_graduate.md` fixture.

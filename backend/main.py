@@ -35,6 +35,9 @@ class MatchRequest(BaseModel):
     home_courses: list[str]
     credits_needed: float = Field(gt=0)
     question: str | None = None
+    # Exchange profile: optional, only used for warnings, never to filter results.
+    study_level: Literal["Bachelor", "Master"] | None = None
+    semester: Literal["Fall 2026", "Spring 2027"] | None = None
 
 
 class AskRequest(BaseModel):
@@ -79,7 +82,7 @@ def match(request: MatchRequest) -> dict:
         judgment = llm.judge_match(home, candidates)
         # Show the course the model judged; if it named none, the top search result.
         chosen = judgment.get("source_file") or (candidates[0].file if candidates else None)
-        cards.append(build_card(judgment, home, by_file.get(chosen)))
+        cards.append(build_card(judgment, home, by_file.get(chosen), request.study_level))
     return {"matches": cards, "summary": summarize_credits(cards, request.credits_needed)}
 
 

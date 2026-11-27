@@ -27,6 +27,7 @@ class Document:
     text: str  # body after the header lines
     university: str | None = None  # the file's University line
     home_university: str | None = None  # dropdown name from HOME_UNIVERSITIES; None for exchange
+    level: str | None = None  # the file's Level line, e.g. Undergraduate
 
 
 @dataclass(frozen=True)
@@ -92,6 +93,7 @@ def load_documents(directory: Path) -> list[Document]:
                 text=raw[body_start + 1 :] if body_start >= 0 else raw,
                 university=_header(raw, "University"),
                 home_university=_home_university(path.name),
+                level=_header(raw, "Level"),
             )
         )
     return docs

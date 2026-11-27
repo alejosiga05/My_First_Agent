@@ -10,6 +10,27 @@
   <main>
     <h1>Exchange Student Assistant</h1>
 
+    <section id="profile" class="profile" aria-labelledby="profile-title">
+      <h2 id="profile-title">Your exchange profile</h2>
+      <p class="hint">Used only to show warnings – it never hides results.</p>
+      <div class="profile-fields">
+        <label>Study level
+          <select id="study-level">
+            <option value="">Choose…</option>
+            <option>Bachelor</option>
+            <option>Master</option>
+          </select>
+        </label>
+        <label>Semester
+          <select id="semester">
+            <option value="">Choose…</option>
+            <option>Fall 2026</option>
+            <option>Spring 2027</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
     <nav class="tabs" role="tablist">
       <button type="button" role="tab" id="tab-courses" aria-controls="panel-courses" aria-selected="true">Courses</button>
       <button type="button" role="tab" id="tab-housing" aria-controls="panel-housing" aria-selected="false">Housing</button>
@@ -18,6 +39,8 @@
 
     <section id="panel-courses" role="tabpanel" aria-labelledby="tab-courses">
       <p class="intro">Tell us what you need to cover, and we'll suggest exchange courses with a source for each one.</p>
+      <p class="warning semester-warning" hidden></p>
+      <p class="fixed-line">All courses shown are taught in English. Course list: Bocconi Fall 2026 catalogue; course descriptions from the 2025-26 course profiles.</p>
 
       <form id="match-form">
         <label>Home university
@@ -41,6 +64,7 @@
 
     <section id="panel-housing" role="tabpanel" aria-labelledby="tab-housing" hidden>
       <p class="intro">Ask about housing in Milan. Answers come only from Bocconi housing pages, with sources.</p>
+      <p class="warning semester-warning" hidden></p>
       <section id="housing-websites" class="card info-card">
         <h2>Where to look for a flat</h2>
         <p class="hint">Loading websites...</p>
