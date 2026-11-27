@@ -1,0 +1,23 @@
+[
+  {"home_university": "Copenhagen Business School", "home_course": "Principles of Corporate Finance",
+   "accept": [{"bocconi": "Corporate Finance", "label": "content_match"}]},
+  {"home_university": "Copenhagen Business School", "home_course": "Financial Statement Analysis",
+   "accept": [{"bocconi": "Financial Statements Analysis", "label": "content_match"}]},
+  {"home_university": "Copenhagen Business School", "home_course": "Marketing",
+   "accept": [{"bocconi": "Marketing", "label": "content_match"}]},
+  {"home_university": "Copenhagen Business School", "home_course": "Organisation",
+   "accept": [{"bocconi": "Organization Theory", "label": "content_match"}]},
+  {"home_university": "Copenhagen Business School", "home_course": "Corporate Strategy in a Network Perspective",
+   "accept": [{"bocconi": "Business Strategy", "label": "content_match"}, {"bocconi": null, "label": "not_sure"}]},
+  {"home_university": "Copenhagen Business School", "home_course": "Europe and Global Megatrends",
+   "accept": [{"bocconi": null, "label": "not_sure"}]},
+  {"home_university": "WU Vienna", "home_course": "Financial Management",
+   "accept": [{"bocconi": "Corporate Finance", "label": "match"}]},
+  {"home_university": "WU Vienna", "home_course": "Strategic Management and Organizational Design",
+   "accept": [{"bocconi": "Business Strategy", "label": "match"}]},
+  {"home_university": "WU Vienna", "home_course": "International Supply Chain Management",
+   "accept": [{"bocconi": null, "label": "not_sure"}]},
+  {"home_university": "WU Vienna", "home_course": "Principles of Capital Markets", "accept": "any"},
+  {"home_university": "WU Vienna", "home_course": "IFRS Accounting", "accept": "any"},
+  {"home_university": "WU Vienna", "home_course": "Global B-2-B Marketing", "accept": "any"}
+]

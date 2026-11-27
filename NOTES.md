@@ -99,7 +99,19 @@
     or empty file gives `residences: []` with no message, and the page shows "Not sure – this list is not available."
   - Fixture: `tests/fixtures/lists/test_exchange_residences.csv`; tests in `tests/test_residences.py`.
 
+- 2026-11-27: Course-matching evaluation (`scripts/evaluate.py`, expectations in `tests/eval/expected_matches.json`).
+  Expected "content match" = label `match` or `credit_gap` (CBS 7.5 vs Bocconi 6 ECTS always gives credit_gap);
+  WU "match" = label `match` only. An expected not_sure passes whatever closest course is shown. A run with
+  `model_error` counts as wrong. Consistent = same (Bocconi course, label) in all 3 runs. The script repeats the
+  3 steps of `/api/match` (search → judge_match → build_card) instead of calling the API.
+  First run (gpt-4o-mini, temperature 0): 9/9 clear cases correct in each of the 3 runs, and 12/12 courses consistent.
+
 ## Open questions
+
+- Eval: the 3 ambiguous WU courses gave Capital Markets → not_sure (closest Corporate Finance), IFRS → Financial
+  Statements Analysis (match), B-2-B Marketing → not_sure (closest Marketing). Is the IFRS match right? Ask a coordinator.
+- Eval: 3 identical runs at temperature 0 show the answers are stable, not that they are right. Accuracy rests on
+  9 hand-labelled cases.
 
 - The residences CSV covers Fall 2026 only (24 Aug – 24 Dec 2026). There is no Spring 2027 data. The Spring notice on the
   Housing tab already says so, but the table itself still shows the Fall rows.
