@@ -36,14 +36,18 @@ def health() -> dict[str, bool]:
 
 
 @app.get("/api/home-courses")
-def home_courses() -> dict[str, list[str]]:
-    return {"home_courses": retrieval.home_courses(retrieval.load_documents(COURSES_DIR))}
+def home_courses() -> dict[str, list[dict]]:
+    grouped = retrieval.home_courses_by_university(retrieval.load_documents(COURSES_DIR))
+    return {"home_universities": [{"name": name, "courses": courses} for name, courses in grouped.items()]}
 
 
 @app.post("/api/match")
 def match(request: MatchRequest) -> dict:
+    if request.home_university not in retrieval.HOME_UNIVERSITIES.values():
+        raise HTTPException(status_code=422, detail=f"Unknown home university: {request.home_university}")
     docs = retrieval.load_documents(COURSES_DIR)
-    homes = {d.course: d for d in docs if d.side == "home"}
+    # Only the chosen university's courses: a course from another home university is rejected below.
+    homes = {d.course: d for d in docs if d.home_university == request.home_university}
     unknown = [name for name in request.home_courses if name not in homes]
     if unknown:
         raise HTTPException(status_code=422, detail=f"Unknown home course(s): {', '.join(unknown)}")

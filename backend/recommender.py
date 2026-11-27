@@ -4,6 +4,8 @@ from backend.retrieval import Document
 
 NOT_SURE_TEXT = "Not sure – ask your coordinator"
 MATCH_TEXT = "Match"
+NO_CLEAR_MATCH_TEXT = "No clear match"
+CLOSEST_PREFIX = "Closest Bocconi course: "
 
 
 def _fmt(value: float) -> str:
@@ -25,9 +27,18 @@ def build_card(judgment: dict, home: Document, exchange: Document | None) -> dic
             f"{_fmt(home.ects)} ECTS, check with your coordinator"
         )
 
+    # A not_sure card must not look like a recommendation: the Bocconi course is only "closest".
+    if label == "not_sure":
+        title = NO_CLEAR_MATCH_TEXT
+        closest_text = CLOSEST_PREFIX + exchange.course if exchange else None
+    else:
+        title, closest_text = exchange.course, None
+
     return {
         "label": label,
         "label_text": label_text,
+        "title": title,
+        "closest_text": closest_text,
         "home_course": home.course,
         "home_ects": home.ects,
         "exchange_course": exchange.course if exchange else None,
@@ -40,12 +51,12 @@ def build_card(judgment: dict, home: Document, exchange: Document | None) -> dic
 
 
 def summarize_credits(cards: list[dict], credits_needed: float) -> dict:
-    """match and credit_gap count with their exchange ECTS; not_sure is shown separately."""
+    """match and credit_gap count with their exchange ECTS; not_sure cards are only counted as courses."""
     confirmed = sum(c["ects"] for c in cards if c["label"] != "not_sure" and c.get("ects") is not None)
-    unsure = sum(c["ects"] for c in cards if c["label"] == "not_sure" and c.get("ects") is not None)
+    not_sure_count = sum(1 for c in cards if c["label"] == "not_sure")
     return {
         "confirmed_ects": confirmed,
-        "unsure_ects": unsure,
+        "not_sure_count": not_sure_count,
         "credits_needed": credits_needed,
         "remaining": max(credits_needed - confirmed, 0),
     }

@@ -36,6 +36,7 @@ label {
 }
 
 input,
+select,
 textarea {
   font: inherit;
   padding: 0.5rem;
@@ -121,6 +122,14 @@ label.checkbox {
 
 .meta {
   color: #52606d;
+}
+
+.fixed-field {
+  margin: 0;
+}
+
+.closest {
+  font-weight: 600;
 }
 
 .badge {

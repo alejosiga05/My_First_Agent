@@ -38,6 +38,8 @@ def test_match_when_content_matches_and_credits_are_enough():
     assert card["home_ects"] == 7.5
     assert card["source_url"] == "https://example.org/Exchange Marketing"
     assert card["source_file"] == "data/courses/bocconi_m.md"
+    assert card["title"] == "Exchange Marketing"
+    assert card["closest_text"] is None
 
 
 def test_credit_gap_when_content_matches_but_credits_short():
@@ -58,6 +60,9 @@ def test_not_sure_when_content_does_not_match():
 
     assert card["label"] == "not_sure"
     assert card["label_text"] == "Not sure – ask your coordinator"
+    assert card["title"] == "No clear match"
+    assert card["closest_text"] == "Closest Bocconi course: Exchange Marketing"
+    assert card["source_url"] == "https://example.org/Exchange Marketing"
 
 
 def test_model_error_reason_is_kept_on_card():
@@ -68,6 +73,8 @@ def test_model_error_reason_is_kept_on_card():
     assert card["label"] == "not_sure"
     assert card["reason"] == "Model unavailable"
     assert card["model_error"] is True
+    assert card["title"] == "No clear match"
+    assert card["closest_text"] == "Closest Bocconi course: Exchange Marketing"
 
 
 def test_not_sure_without_any_exchange_course():
@@ -77,6 +84,8 @@ def test_not_sure_without_any_exchange_course():
     assert card["exchange_course"] is None
     assert card["ects"] is None
     assert card["source_url"] is None
+    assert card["title"] == "No clear match"
+    assert card["closest_text"] is None
 
 
 def test_credit_gap_counts_and_not_sure_does_not():
@@ -90,7 +99,7 @@ def test_credit_gap_counts_and_not_sure_does_not():
 
     assert summary == {
         "confirmed_ects": 13.5,
-        "unsure_ects": 6,
+        "not_sure_count": 1,
         "credits_needed": 30,
         "remaining": 16.5,
     }
@@ -102,7 +111,7 @@ def test_missing_ects_is_ignored_not_guessed():
     summary = summarize_credits(cards, credits_needed=6)
 
     assert summary["confirmed_ects"] == 6
-    assert summary["unsure_ects"] == 0
+    assert summary["not_sure_count"] == 1
     assert summary["remaining"] == 0
 
 
@@ -116,5 +125,5 @@ def test_no_matches_gives_zero_totals():
     summary = summarize_credits([], credits_needed=30)
 
     assert summary["confirmed_ects"] == 0
-    assert summary["unsure_ects"] == 0
+    assert summary["not_sure_count"] == 0
     assert summary["remaining"] == 30

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from backend.retrieval import home_courses, load_documents, search
+from backend.retrieval import home_courses, home_courses_by_university, load_documents, search
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "courses"
 
@@ -31,7 +31,34 @@ def test_files_without_course_line_are_skipped():
 def test_home_courses_lists_only_home_side():
     names = home_courses(load_documents(FIXTURE_DIR))
 
-    assert sorted(names) == ["Test Corporate Finance", "Test Marketing"]
+    assert sorted(names) == ["Test Corporate Finance", "Test IFRS Accounting", "Test Marketing"]
+
+
+def test_wu_file_is_home_and_keeps_university_line():
+    doc = docs_by_course()["Test IFRS Accounting"]
+
+    assert doc.side == "home"
+    assert doc.university == "Test Second Home School"
+    assert doc.home_university == "WU Vienna"
+
+
+def test_cbs_file_keeps_university_line():
+    doc = docs_by_course()["Test Marketing"]
+
+    assert doc.university == "Test Home School"
+    assert doc.home_university == "Copenhagen Business School"
+
+
+def test_exchange_file_has_no_home_university():
+    assert docs_by_course()["Exchange Marketing"].home_university is None
+
+
+def test_home_courses_grouped_by_university_in_fixed_order():
+    grouped = home_courses_by_university(load_documents(FIXTURE_DIR))
+
+    assert list(grouped) == ["Copenhagen Business School", "WU Vienna"]
+    assert sorted(grouped["Copenhagen Business School"]) == ["Test Corporate Finance", "Test Marketing"]
+    assert grouped["WU Vienna"] == ["Test IFRS Accounting"]
 
 
 def test_search_finds_relevant_exchange_course_first():

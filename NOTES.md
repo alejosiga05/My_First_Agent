@@ -22,8 +22,17 @@
 - 2026-11-26: The form lists CBS courses as checkboxes from `GET /api/home-courses`; unknown names get 422.
 - 2026-11-26: Model is `OPENAI_MODEL` from .env, default `gpt-4o-mini`.
 - 2026-11-26: Deadline moved to 1 Dec. Timetable clashes dropped: we have no timetable data.
+- 2026-11-27: Second home university: 6 WU Vienna files (`wu_*.md`). Home prefixes live in
+  `HOME_UNIVERSITIES` in retrieval.py (`cbs_` -> "Copenhagen Business School", `wu_` -> "WU Vienna");
+  the dropdown shows those short names, and each Document keeps its raw `University:` line in `university`.
+- 2026-11-27: `GET /api/home-courses` returns `{"home_universities": [{"name", "courses"}]}` in that order.
+  `/api/match` gives 422 for an unknown home university or a course from a different home university.
+  Exchange university is fixed to "Bocconi University" on the page and not validated by the backend.
+- 2026-11-27: not_sure cards get title "No clear match" and `closest_text` "Closest Bocconi course: <name>"
+  (set in recommender.py), so they don't read as recommendations. Model-error cards use the same title.
+- 2026-11-27: Summary field `unsure_ects` replaced by `not_sure_count` (number of home courses without a
+  clear match), shown as "N courses without a clear match – ask your coordinator".
 
 ## Open questions
 
 - Europe and Global Megatrends has no obvious Bocconi counterpart among the 8 profiles; expect "not sure".
-- home_university / exchange_university form fields are currently not used by the matching.

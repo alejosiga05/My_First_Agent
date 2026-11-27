@@ -13,6 +13,13 @@
       "reason": "Both cover capital budgeting, cost of capital and capital structure.",
       "source_file": "tests/fixtures/courses/bocconi_test_finance.md",
       "content_match": true
+    },
+    "Test IFRS Accounting": {
+      "exchange_course": "Exchange Corporate Finance",
+      "home_course": "Test IFRS Accounting",
+      "reason": "No Bocconi course covers IFRS reporting.",
+      "source_file": "tests/fixtures/courses/bocconi_test_finance.md",
+      "content_match": false
     }
   }
 }

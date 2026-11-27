@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
-HOME_PREFIX = "cbs_"
+# Home file prefix -> name shown in the dropdown, in dropdown order.
+HOME_UNIVERSITIES = {"cbs_": "Copenhagen Business School", "wu_": "WU Vienna"}
 EXCHANGE_PREFIX = "bocconi_"
 
 STOPWORDS = set(
@@ -24,6 +25,8 @@ class Document:
     ects: float | None
     side: str  # "home" or "exchange"
     text: str  # body after the header lines
+    university: str | None = None  # the file's University line
+    home_university: str | None = None  # dropdown name from HOME_UNIVERSITIES; None for exchange
 
 
 @dataclass(frozen=True)
@@ -47,8 +50,15 @@ def _parse_ects(value: str | None) -> float | None:
         return None
 
 
+def _home_university(name: str) -> str | None:
+    for prefix, university in HOME_UNIVERSITIES.items():
+        if name.startswith(prefix):
+            return university
+    return None
+
+
 def _side(name: str) -> str | None:
-    if name.startswith(HOME_PREFIX):
+    if _home_university(name):
         return "home"
     if name.startswith(EXCHANGE_PREFIX):
         return "exchange"
@@ -80,6 +90,8 @@ def load_documents(directory: Path) -> list[Document]:
                 ects=_parse_ects(_header(raw, "ECTS")),
                 side=side,
                 text=raw[body_start + 1 :] if body_start >= 0 else raw,
+                university=_header(raw, "University"),
+                home_university=_home_university(path.name),
             )
         )
     return docs
@@ -87,6 +99,14 @@ def load_documents(directory: Path) -> list[Document]:
 
 def home_courses(docs: list[Document]) -> list[str]:
     return [d.course for d in docs if d.side == "home"]
+
+
+def home_courses_by_university(docs: list[Document]) -> dict[str, list[str]]:
+    """Home course names per home university, in HOME_UNIVERSITIES order."""
+    return {
+        university: [d.course for d in docs if d.home_university == university]
+        for university in HOME_UNIVERSITIES.values()
+    }
 
 
 def chunks_of(doc: Document) -> list[Chunk]:
