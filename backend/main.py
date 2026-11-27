@@ -2,12 +2,13 @@
 
 import os
 from pathlib import Path
+from typing import Literal
 
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from backend import llm, retrieval
 from backend.recommender import build_card, summarize_credits
@@ -18,6 +19,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = ROOT_DIR / "frontend"
 DATA_DIR = ROOT_DIR / "data"
 COURSES_DIR = DATA_DIR / "courses"
+SECTION_DIRS = {"housing": DATA_DIR / "housing", "clubs": DATA_DIR / "clubs"}
 
 app = FastAPI(title="Course Exchange Assistant")
 
@@ -28,6 +30,18 @@ class MatchRequest(BaseModel):
     home_courses: list[str]
     credits_needed: float = Field(gt=0)
     question: str | None = None
+
+
+class AskRequest(BaseModel):
+    section: Literal["housing", "clubs"]
+    question: str
+
+    @field_validator("question")
+    @classmethod
+    def question_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("question must not be empty")
+        return value.strip()
 
 
 @app.get("/health")
@@ -62,6 +76,28 @@ def match(request: MatchRequest) -> dict:
         chosen = judgment.get("source_file") or (candidates[0].file if candidates else None)
         cards.append(build_card(judgment, home, by_file.get(chosen)))
     return {"matches": cards, "summary": summarize_credits(cards, request.credits_needed)}
+
+
+@app.post("/api/ask")
+def ask(request: AskRequest) -> dict:
+    """Answer a Housing or Clubs question from that section's files only."""
+    docs = retrieval.load_info_documents(SECTION_DIRS[request.section])
+    chunks = retrieval.search_question(request.question, docs)
+    result = llm.answer_question(request.question, chunks)
+
+    by_file = {d.file: d for d in docs}
+    # Not answered: show the closest retrieved files instead, in ranking order.
+    files = result["sources"] if result["found"] else list(dict.fromkeys(c.file for c in chunks))
+    sources = [
+        {"file": f, "title": by_file[f].course, "url": by_file[f].source_url} for f in files if f in by_file
+    ]
+    return {
+        "section": request.section,
+        "found": result["found"],
+        "answer": result["answer"],
+        "sources": sources,
+        "model_error": result["model_error"],
+    }
 
 
 app.mount("/data", StaticFiles(directory=DATA_DIR), name="data")

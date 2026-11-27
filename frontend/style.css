@@ -152,3 +152,51 @@ label.checkbox {
   color: #9a3412;
   background: #ffedd5;
 }
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #d9e2ec;
+}
+
+.tabs button {
+  color: #52606d;
+  background: transparent;
+  border-bottom: 3px solid transparent;
+  border-radius: 4px 4px 0 0;
+}
+
+.tabs button[aria-selected="true"] {
+  color: #1d4ed8;
+  border-bottom-color: #2563eb;
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+button.suggestion {
+  font-weight: 400;
+  font-size: 0.9rem;
+  text-align: left;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.ask-message.error {
+  color: #b42318;
+}
+
+.answer {
+  white-space: pre-line;
+}
+
+.sources {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+}

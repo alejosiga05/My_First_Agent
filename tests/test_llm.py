@@ -7,10 +7,13 @@ from types import SimpleNamespace
 import pytest
 
 from backend import llm
-from backend.retrieval import load_documents, search
+from backend.retrieval import load_documents, load_info_documents, search, search_question
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "courses"
 MARKETING_FILE = "tests/fixtures/courses/bocconi_test_marketing.md"
+HOUSING_DIR = Path(__file__).parent / "fixtures" / "housing"
+EXCHANGE_HOUSING_FILE = "tests/fixtures/housing/test_exchange_housing.md"
+PRIVATE_HOUSING_FILE = "tests/fixtures/housing/test_private_housing.md"
 
 
 class FakeClient:
@@ -137,3 +140,142 @@ def test_prompt_contains_home_and_candidate_texts(monkeypatch, home_and_candidat
     assert "Branding and consumer behaviour" in prompt
     assert MARKETING_FILE in prompt
     assert "Branding, pricing and consumer behaviour" in prompt
+
+
+# --- answer_question (Housing and Clubs sections) ---
+
+
+@pytest.fixture
+def housing_chunks():
+    docs = load_info_documents(HOUSING_DIR)
+    return search_question("How much do residences cost and where can I find a private flat?", docs)
+
+
+def reply(**overrides):
+    body = {
+        "answer": "Residence Alpha costs EUR 4,000 for the semester.",
+        "sources": [EXCHANGE_HOUSING_FILE],
+        "found": True,
+    }
+    return json.dumps({**body, **overrides})
+
+
+def ask(housing_chunks, question="How much does Residence Alpha cost?"):
+    return llm.answer_question(question, housing_chunks)
+
+
+def test_answer_is_parsed(monkeypatch, housing_chunks):
+    use_client(monkeypatch, FakeClient(content=reply()))
+
+    result = ask(housing_chunks)
+
+    assert result == {
+        "answer": "Residence Alpha costs EUR 4,000 for the semester.",
+        "sources": [EXCHANGE_HOUSING_FILE],
+        "found": True,
+        "model_error": False,
+    }
+
+
+def test_url_not_in_retrieved_text_is_removed(monkeypatch, housing_chunks):
+    text = "Pay a deposit at https://evil.example.com/pay or browse https://flats.example.com."
+    use_client(monkeypatch, FakeClient(content=reply(answer=text, sources=[PRIVATE_HOUSING_FILE])))
+
+    result = ask(housing_chunks)
+
+    assert "evil.example.com" not in result["answer"]
+    assert "https://flats.example.com" in result["answer"]
+
+
+def test_remove_unknown_urls_keeps_only_allowed_links():
+    allowed = "See https://example.org/housing/apply and www.allowed.example.org for details."
+    answer = "Apply at https://example.org/housing/apply, not www.other.example.org or http://x.example/y)."
+
+    cleaned = llm.remove_unknown_urls(answer, allowed)
+
+    assert "https://example.org/housing/apply" in cleaned
+    assert "other.example.org" not in cleaned
+    assert "x.example" not in cleaned
+
+
+def test_source_line_url_of_retrieved_file_is_allowed(monkeypatch, housing_chunks):
+    text = "Check https://example.org/housing/exchange for details."
+    use_client(monkeypatch, FakeClient(content=reply(answer=text)))
+
+    assert "https://example.org/housing/exchange" in ask(housing_chunks)["answer"]
+
+
+def test_found_false_gives_dont_know(monkeypatch, housing_chunks):
+    use_client(monkeypatch, FakeClient(content=reply(answer="Maybe EUR 10.", sources=[], found=False)))
+
+    result = ask(housing_chunks)
+
+    assert result["found"] is False
+    assert result["answer"] == llm.DONT_KNOW
+    assert result["model_error"] is False
+
+
+def test_non_boolean_found_is_not_found(monkeypatch, housing_chunks):
+    use_client(monkeypatch, FakeClient(content=reply(found="yes")))
+
+    assert ask(housing_chunks)["found"] is False
+
+
+def test_unknown_source_is_dropped(monkeypatch, housing_chunks):
+    sources = [EXCHANGE_HOUSING_FILE, "data/housing/invented.md"]
+    use_client(monkeypatch, FakeClient(content=reply(sources=sources)))
+
+    assert ask(housing_chunks)["sources"] == [EXCHANGE_HOUSING_FILE]
+
+
+def test_found_without_valid_source_is_not_found(monkeypatch, housing_chunks):
+    use_client(monkeypatch, FakeClient(content=reply(sources=["data/housing/invented.md"])))
+
+    result = ask(housing_chunks)
+
+    assert result["found"] is False
+    assert result["answer"] == llm.DONT_KNOW
+
+
+def test_bad_json_answer_reports_model_unavailable(monkeypatch, housing_chunks):
+    use_client(monkeypatch, FakeClient(content="not json"))
+
+    result = ask(housing_chunks)
+
+    assert result["model_error"] is True
+    assert result["found"] is False
+    assert result["answer"] == llm.MODEL_UNAVAILABLE_ANSWER == "Model unavailable – could not answer"
+
+
+def test_api_error_answer_logs_type_only(monkeypatch, caplog, housing_chunks):
+    use_client(monkeypatch, FakeClient(error=RuntimeError("secret-detail sk-123")))
+
+    result = ask(housing_chunks)
+
+    assert result["model_error"] is True
+    assert "RuntimeError" in caplog.text
+    assert "sk-123" not in caplog.text
+
+
+def test_no_chunks_skips_the_model_for_questions(monkeypatch):
+    client = FakeClient(content=reply())
+    use_client(monkeypatch, client)
+
+    result = llm.answer_question("Anything?", [])
+
+    assert result["found"] is False
+    assert result["answer"] == llm.DONT_KNOW
+    assert client.messages is None
+
+
+def test_question_prompt_contains_question_chunks_and_rules(monkeypatch, housing_chunks):
+    client = FakeClient(content=reply())
+    use_client(monkeypatch, client)
+
+    ask(housing_chunks, question="How much does Residence Alpha cost?")
+
+    prompt = " ".join(m["content"] for m in client.messages)
+    assert "How much does Residence Alpha cost?" in prompt
+    assert EXCHANGE_HOUSING_FILE in prompt
+    assert "EUR 4,000 for the semester" in prompt
+    assert "exactly as written" in prompt

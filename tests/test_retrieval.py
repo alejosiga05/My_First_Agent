@@ -1,8 +1,16 @@
 from pathlib import Path
 
-from backend.retrieval import home_courses, home_courses_by_university, load_documents, search
+from backend.retrieval import (
+    home_courses,
+    home_courses_by_university,
+    load_documents,
+    load_info_documents,
+    search,
+    search_question,
+)
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "courses"
+HOUSING_DIR = Path(__file__).parent / "fixtures" / "housing"
 
 
 def docs_by_course():
@@ -93,3 +101,27 @@ def test_search_groups_to_k_distinct_files():
     assert len({c.file for c in results}) == 2
     for file in {c.file for c in results}:
         assert sum(c.file == file for c in results) <= 2
+
+
+def test_info_documents_keep_source_and_topic():
+    docs = {d.file: d for d in load_info_documents(HOUSING_DIR)}
+
+    doc = docs["tests/fixtures/housing/test_exchange_housing.md"]
+    assert doc.source_url == "https://example.org/housing/exchange"
+    assert doc.course == "Test housing for exchange students"
+    assert doc.ects is None
+    assert set(docs) == {
+        "tests/fixtures/housing/test_exchange_housing.md",
+        "tests/fixtures/housing/test_private_housing.md",
+    }
+
+
+def test_search_question_ranks_the_relevant_file_first():
+    docs = load_info_documents(HOUSING_DIR)
+
+    chunks = search_question("How much do the residences cost for the semester?", docs)
+
+    assert chunks[0].file == "tests/fixtures/housing/test_exchange_housing.md"
+    assert any("EUR 4,000" in c.text for c in chunks)
+    sources = {d.file: d.source_url for d in docs}
+    assert all(c.source_url == sources[c.file] for c in chunks)

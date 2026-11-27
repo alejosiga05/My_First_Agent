@@ -9,29 +9,69 @@
 <body>
   <main>
     <h1>Course Exchange Assistant</h1>
-    <p class="intro">Tell us what you need to cover, and we'll suggest exchange courses with a source for each one.</p>
 
-    <form id="match-form">
-      <label>Home university
-        <select name="home_university" id="home-university" required></select>
-      </label>
-      <p class="fixed-field">Exchange university: <strong>Bocconi University</strong></p>
-      <fieldset id="home-courses">
-        <legend>Home courses I need to cover</legend>
-        <p class="hint">Loading courses...</p>
-      </fieldset>
-      <label>Credits I need (ECTS)
-        <input name="credits_needed" type="number" min="1" step="0.5" required>
-      </label>
-      <label>Question <span class="hint">(optional)</span>
-        <input name="question" placeholder="e.g. Which courses are taught in English?">
-      </label>
-      <button type="submit">Find matching courses</button>
-    </form>
+    <nav class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-courses" aria-controls="panel-courses" aria-selected="true">Courses</button>
+      <button type="button" role="tab" id="tab-housing" aria-controls="panel-housing" aria-selected="false">Housing</button>
+      <button type="button" role="tab" id="tab-clubs" aria-controls="panel-clubs" aria-selected="false">Clubs &amp; student life</button>
+    </nav>
 
-    <p id="message" role="status"></p>
-    <p id="summary"></p>
-    <section id="results"></section>
+    <section id="panel-courses" role="tabpanel" aria-labelledby="tab-courses">
+      <p class="intro">Tell us what you need to cover, and we'll suggest exchange courses with a source for each one.</p>
+
+      <form id="match-form">
+        <label>Home university
+          <select name="home_university" id="home-university" required></select>
+        </label>
+        <p class="fixed-field">Exchange university: <strong>Bocconi University</strong></p>
+        <fieldset id="home-courses">
+          <legend>Home courses I need to cover</legend>
+          <p class="hint">Loading courses...</p>
+        </fieldset>
+        <label>Credits I need (ECTS)
+          <input name="credits_needed" type="number" min="1" step="0.5" required>
+        </label>
+        <button type="submit">Find matching courses</button>
+      </form>
+
+      <p id="message" role="status"></p>
+      <p id="summary"></p>
+      <section id="results"></section>
+    </section>
+
+    <section id="panel-housing" role="tabpanel" aria-labelledby="tab-housing" hidden>
+      <p class="intro">Ask about housing in Milan. Answers come only from Bocconi housing pages, with sources.</p>
+      <form class="ask-form" data-section="housing">
+        <label>Your question
+          <textarea name="question" rows="3" required></textarea>
+        </label>
+        <div class="suggestions">
+          <button type="button" class="suggestion">Which residences are reserved for exchange students and how much do they cost?</button>
+          <button type="button" class="suggestion">How do I apply for Bocconi housing as an exchange student?</button>
+          <button type="button" class="suggestion">Where can I look for a private flat in Milan?</button>
+        </div>
+        <button type="submit">Ask</button>
+      </form>
+      <p class="ask-message" role="status"></p>
+      <section class="ask-result"></section>
+    </section>
+
+    <section id="panel-clubs" role="tabpanel" aria-labelledby="tab-clubs" hidden>
+      <p class="intro">Ask about student associations and meeting people. Answers come only from official sources.</p>
+      <form class="ask-form" data-section="clubs">
+        <label>Your question
+          <textarea name="question" rows="3" required></textarea>
+        </label>
+        <div class="suggestions">
+          <button type="button" class="suggestion">I like finance and football, which clubs could I join?</button>
+          <button type="button" class="suggestion">When and how can I join a student association?</button>
+          <button type="button" class="suggestion">How can I meet other exchange students?</button>
+        </div>
+        <button type="submit">Ask</button>
+      </form>
+      <p class="ask-message" role="status"></p>
+      <section class="ask-result"></section>
+    </section>
   </main>
   <script src="app.js"></script>
 </body>

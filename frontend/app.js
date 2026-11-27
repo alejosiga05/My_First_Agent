@@ -61,7 +61,6 @@ form.addEventListener("submit", async (event) => {
     exchange_university: EXCHANGE_UNIVERSITY,
     home_courses: data.getAll("home_courses"),
     credits_needed: Number(data.get("credits_needed")),
-    question: data.get("question").trim() || null,
   };
 
   if (body.home_courses.length === 0) {
@@ -138,3 +137,82 @@ async function loadHomeCourses() {
 homeUniversityEl.addEventListener("change", renderHomeCourses);
 
 loadHomeCourses();
+
+// --- Tabs ---
+const tabs = document.querySelectorAll('[role="tab"]');
+tabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    tabs.forEach((other) => {
+      const selected = other === tab;
+      other.setAttribute("aria-selected", String(selected));
+      document.getElementById(other.getAttribute("aria-controls")).hidden = !selected;
+    });
+  });
+});
+
+// --- Housing and Clubs: questions answered from our documents ---
+function renderAnswer(resultEl, result) {
+  const card = document.createElement("article");
+  card.className = `card ${result.found ? "label-match" : "label-not_sure"}`;
+  addText(card, "p", result.answer, result.model_error ? "model-error" : "answer");
+
+  if (result.sources.length) {
+    addText(card, "p", result.found ? "Sources:" : "Closest sources:", "meta");
+    const list = document.createElement("ul");
+    list.className = "sources";
+    result.sources.forEach((source) => {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = source.title;
+      item.appendChild(link);
+      list.appendChild(item);
+    });
+    card.appendChild(list);
+  }
+  resultEl.replaceChildren(card);
+}
+
+document.querySelectorAll(".ask-form").forEach((askForm) => {
+  const panel = askForm.closest('[role="tabpanel"]');
+  const box = askForm.querySelector("textarea");
+  const askButton = askForm.querySelector('button[type="submit"]');
+  const askMessage = panel.querySelector(".ask-message");
+  const resultEl = panel.querySelector(".ask-result");
+
+  askForm.querySelectorAll(".suggestion").forEach((suggestion) => {
+    suggestion.addEventListener("click", () => {
+      box.value = suggestion.textContent;
+      box.focus();
+    });
+  });
+
+  askForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const question = box.value.trim();
+    if (!question) return;
+
+    askButton.disabled = true;
+    askMessage.className = "ask-message";
+    askMessage.textContent = "Searching...";
+    resultEl.replaceChildren();
+
+    try {
+      const response = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section: askForm.dataset.section, question }),
+      });
+      if (!response.ok) throw new Error(`Server error ${response.status}`);
+      askMessage.textContent = "";
+      renderAnswer(resultEl, await response.json());
+    } catch (err) {
+      askMessage.className = "ask-message error";
+      askMessage.textContent = "Something went wrong. Please try again.";
+    } finally {
+      askButton.disabled = false;
+    }
+  });
+});

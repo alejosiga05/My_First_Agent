@@ -97,6 +97,29 @@ def load_documents(directory: Path) -> list[Document]:
     return docs
 
 
+def load_info_documents(directory: Path) -> list[Document]:
+    """Read housing/clubs files: every file with a Source line. The Topic line is the title (in `course`)."""
+    docs = []
+    for path in sorted(Path(directory).glob("*.md")):
+        raw = path.read_text(encoding="utf-8")
+        source = _header(raw, "Source")
+        if not source:
+            continue
+        body_start = raw.find("\n# ")
+        docs.append(
+            Document(
+                file=_relative(path),
+                source_url=source,
+                course=_header(raw, "Topic") or path.stem,
+                ects=None,
+                side="info",
+                text=raw[body_start + 1 :] if body_start >= 0 else raw,
+                university=_header(raw, "University"),
+            )
+        )
+    return docs
+
+
 def home_courses(docs: list[Document]) -> list[str]:
     return [d.course for d in docs if d.side == "home"]
 
@@ -137,13 +160,28 @@ def _cosine(a: dict[str, float], b: dict[str, float]) -> float:
 def search(home: Document, docs: list[Document], k: int = 3, per_file: int = 2) -> list[Chunk]:
     """TF-IDF search: the best `per_file` chunks from each of the `k` most relevant exchange files."""
     chunks = [c for d in docs if d.side == "exchange" for c in chunks_of(d)]
+    return _rank(f"{home.course}\n{home.text}", chunks, k, per_file)
+
+
+def search_question(question: str, docs: list[Document], k: int = 3, per_file: int = 20) -> list[Chunk]:
+    """TF-IDF search of a student's question over the given documents (one section's folder).
+
+    per_file is high on purpose: these files are short, and a question often uses other words than the
+    text ("cost" vs "Prices", "football" vs "Sports"), so the model gets the 3 best files nearly whole.
+    """
+    chunks = [c for d in docs for c in chunks_of(d)]
+    return _rank(question, chunks, k, per_file)
+
+
+def _rank(query_text: str, chunks: list[Chunk], k: int, per_file: int) -> list[Chunk]:
+    """The best `per_file` chunks from each of the `k` files most similar to the query."""
     if not chunks:
         return []
     chunk_tokens = [_tokens(c.text) for c in chunks]
     df = Counter(t for tokens in chunk_tokens for t in set(tokens))
     idf = {t: math.log((1 + len(chunks)) / (1 + n)) + 1 for t, n in df.items()}
 
-    query = _vector(_tokens(f"{home.course}\n{home.text}"), idf)
+    query = _vector(_tokens(query_text), idf)
     scored = sorted(
         ((_cosine(query, _vector(tokens, idf)), i) for i, tokens in enumerate(chunk_tokens)),
         key=lambda pair: (-pair[0], pair[1]),
