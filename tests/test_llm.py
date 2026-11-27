@@ -279,3 +279,7 @@ def test_question_prompt_contains_question_chunks_and_rules(monkeypatch, housing
     assert EXCHANGE_HOUSING_FILE in prompt
     assert "EUR 4,000 for the semester" in prompt
     assert "exactly as written" in prompt
+
+
+def test_answer_prompt_asks_for_urls_of_named_websites():
+    assert "If you name a website that appears in the text, include its URL exactly as written." in llm.ANSWER_PROMPT

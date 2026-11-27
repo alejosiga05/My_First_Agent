@@ -51,6 +51,24 @@
   when comparing. URLs without `http(s)://` or `www.` are not detected.
 - 2026-11-27: The unused "Question" field was removed from the Courses form. `MatchRequest.question` stays
   optional in the backend (ignored), so old requests still work.
+- 2026-11-27: Model-free lists for the Housing and Clubs tabs, parsed in retrieval.py (`housing_websites`,
+  `club_areas`, `start_here`); file paths are constants in main.py. No model call on any of them.
+  - `GET /api/housing/websites` -> `{websites: [{name, url}], source: {file, title, url}, disclaimer}`, from the
+    `## Websites` section of `bocconi_private_housing_websites.md` only (22 sites). The disclaimer
+    "Listed by Bocconi – Bocconi does not guarantee these websites" is a fixed string in main.py.
+  - `GET /api/clubs/areas` -> `{areas: [{name, clubs}], source}` from the `## ` headings of
+    `bocconi_student_associations_list.md` (10 areas, 126 clubs). Headings in `NOT_AREAS`
+    ("Tips for exchange students") are skipped. "Show clubs" filters this list on the page.
+  - `GET /api/clubs/start-here` -> `{esn, fair}`: the `## ESN...` section of the community file (website =
+    first URL on the Website line, Instagram handle, App line) and the "Associations on Display" bullet of the
+    how-to-join file (its event URL is shown as a link, the "(source: ...)" part is cut from the text).
+    The Instagram URL is built in code from the handle (`https://www.instagram.com/<handle>`); the file has no URL.
+  - A missing file or section gives empty lists / `null` (200); the page then shows
+    "Not sure – this list is not available."
+  - Fixtures for these live in `tests/fixtures/lists/`, so the housing/clubs fixtures used by /api/ask
+    retrieval tests are unchanged.
+- 2026-11-27: `ANSWER_PROMPT` now says "If you name a website that appears in the text, include its URL
+  exactly as written." The URL filter (`remove_unknown_urls`) is unchanged.
 
 ## Open questions
 

@@ -1,4 +1,4 @@
-# Course Exchange Assistant
+# Exchange Student Assistant
 
 This assistant helps exchange students prepare their semester at Bocconi. The page has three tabs:
 

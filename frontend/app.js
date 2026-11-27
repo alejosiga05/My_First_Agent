@@ -216,3 +216,143 @@ document.querySelectorAll(".ask-form").forEach((askForm) => {
     }
   });
 });
+
+// --- Fixed lists (no model): parsed from data/ files by the server ---
+const NOT_AVAILABLE = "Not sure – this list is not available.";
+
+function addLink(parent, url, text, className) {
+  const link = document.createElement("a");
+  link.href = url;
+  link.target = "_blank";
+  link.rel = "noopener";
+  link.textContent = text;
+  if (className) link.className = className;
+  parent.appendChild(link);
+  return link;
+}
+
+function addSourceLine(parent, source, label) {
+  if (!source || !source.url) return;
+  const line = addText(parent, "p", `${label || "Source"}: `, "meta");
+  addLink(line, source.url, source.title);
+}
+
+async function getJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Server error ${response.status}`);
+  return response.json();
+}
+
+async function loadHousingWebsites() {
+  const panel = document.getElementById("housing-websites");
+  const hint = panel.querySelector(".hint");
+  try {
+    const result = await getJson("/api/housing/websites");
+    if (!result.websites.length) {
+      hint.textContent = NOT_AVAILABLE;
+      return;
+    }
+    hint.remove();
+    const list = document.createElement("div");
+    list.className = "link-buttons";
+    result.websites.forEach((site) => addLink(list, site.url, site.name, "link-button"));
+    panel.appendChild(list);
+    addText(panel, "p", result.disclaimer, "meta");
+    addSourceLine(panel, result.source);
+  } catch (err) {
+    hint.textContent = NOT_AVAILABLE;
+  }
+}
+
+async function loadStartHere() {
+  const panel = document.getElementById("clubs-start");
+  const hint = panel.querySelector(".hint");
+  try {
+    const { esn, fair } = await getJson("/api/clubs/start-here");
+    if (!esn && !fair) {
+      hint.textContent = NOT_AVAILABLE;
+      return;
+    }
+    hint.remove();
+    if (esn) {
+      addText(panel, "h3", esn.name);
+      const links = document.createElement("div");
+      links.className = "link-buttons";
+      if (esn.website) addLink(links, esn.website, "Website", "link-button");
+      if (esn.instagram) addLink(links, esn.instagram.url, `Instagram ${esn.instagram.handle}`, "link-button");
+      panel.appendChild(links);
+      if (esn.app) addText(panel, "p", `App: ${esn.app}`);
+      addSourceLine(panel, esn.source);
+    }
+    if (fair) {
+      addText(panel, "h3", "Associations on Display");
+      addText(panel, "p", fair.text);
+      if (fair.event_url) addLink(addText(panel, "p", ""), fair.event_url, "Event page");
+      addSourceLine(panel, fair.source);
+    }
+  } catch (err) {
+    hint.textContent = NOT_AVAILABLE;
+  }
+}
+
+const clubAreasForm = document.getElementById("club-areas-form");
+const clubAreasEl = document.getElementById("club-areas");
+const clubMessage = document.getElementById("club-message");
+const clubResults = document.getElementById("club-results");
+let clubList = { areas: [], source: null };
+
+async function loadClubAreas() {
+  const hint = clubAreasEl.querySelector(".hint");
+  try {
+    clubList = await getJson("/api/clubs/areas");
+    if (!clubList.areas.length) {
+      hint.textContent = NOT_AVAILABLE;
+      return;
+    }
+    hint.remove();
+    clubList.areas.forEach((area) => {
+      const label = document.createElement("label");
+      label.className = "checkbox";
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.name = "area";
+      box.value = area.name;
+      label.append(box, " " + area.name);
+      clubAreasEl.appendChild(label);
+    });
+  } catch (err) {
+    hint.textContent = NOT_AVAILABLE;
+  }
+}
+
+clubAreasForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const chosen = new FormData(clubAreasForm).getAll("area");
+  clubResults.replaceChildren();
+  if (!chosen.length) {
+    clubMessage.className = "error";
+    clubMessage.textContent = "Please choose at least one area.";
+    return;
+  }
+  clubMessage.className = "";
+  clubMessage.textContent = "";
+  const card = document.createElement("article");
+  card.className = "card";
+  clubList.areas
+    .filter((area) => chosen.includes(area.name))
+    .forEach((area) => {
+      addText(card, "h3", area.name);
+      const list = document.createElement("ul");
+      list.className = "sources";
+      area.clubs.forEach((club) => addText(list, "li", club));
+      card.appendChild(list);
+    });
+  if (clubList.source) {
+    addSourceLine(card, { url: clubList.source.url, title: "official Bocconi list" });
+  }
+  clubResults.appendChild(card);
+});
+
+loadHousingWebsites();
+loadStartHere();
+loadClubAreas();

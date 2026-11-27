@@ -92,6 +92,7 @@ DONT_KNOW = "I don't know – please ask the Bocconi International Student Desk 
 ANSWER_PROMPT = """You answer a student's question about their exchange semester.
 Answer ONLY from the text given below. Do not use any other knowledge.
 Copy prices, dates and links exactly as written in the text.
+If you name a website that appears in the text, include its URL exactly as written.
 Never calculate, add up, convert or count anything.
 Keep the answer short (at most a few sentences), in plain text, no markdown.
 If the text does not answer the question, set found to false.

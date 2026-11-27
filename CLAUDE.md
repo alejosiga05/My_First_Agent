@@ -1,4 +1,4 @@
-# Course Exchange Assistant
+# Exchange Student Assistant
 
 ## What this is
 

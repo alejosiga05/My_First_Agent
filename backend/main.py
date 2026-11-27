@@ -20,8 +20,13 @@ FRONTEND_DIR = ROOT_DIR / "frontend"
 DATA_DIR = ROOT_DIR / "data"
 COURSES_DIR = DATA_DIR / "courses"
 SECTION_DIRS = {"housing": DATA_DIR / "housing", "clubs": DATA_DIR / "clubs"}
+HOUSING_WEBSITES_FILE = DATA_DIR / "housing" / "bocconi_private_housing_websites.md"
+CLUBS_LIST_FILE = DATA_DIR / "clubs" / "bocconi_student_associations_list.md"
+CLUBS_COMMUNITY_FILE = DATA_DIR / "clubs" / "bocconi_international_student_community.md"
+CLUBS_JOIN_FILE = DATA_DIR / "clubs" / "bocconi_how_to_join_associations.md"
+WEBSITES_DISCLAIMER = "Listed by Bocconi – Bocconi does not guarantee these websites"
 
-app = FastAPI(title="Course Exchange Assistant")
+app = FastAPI(title="Exchange Student Assistant")
 
 
 class MatchRequest(BaseModel):
@@ -98,6 +103,24 @@ def ask(request: AskRequest) -> dict:
         "sources": sources,
         "model_error": result["model_error"],
     }
+
+
+@app.get("/api/housing/websites")
+def housing_websites() -> dict:
+    """Private-housing websites listed by Bocconi, parsed from the file. No model call."""
+    return {**retrieval.housing_websites(HOUSING_WEBSITES_FILE), "disclaimer": WEBSITES_DISCLAIMER}
+
+
+@app.get("/api/clubs/areas")
+def club_areas() -> dict:
+    """Topic areas of the official associations list, each with its clubs. No model call."""
+    return retrieval.club_areas(CLUBS_LIST_FILE)
+
+
+@app.get("/api/clubs/start-here")
+def clubs_start_here() -> dict:
+    """ESN Bocconi and Associations on Display, with links from the files. No model call."""
+    return retrieval.start_here(CLUBS_COMMUNITY_FILE, CLUBS_JOIN_FILE)
 
 
 app.mount("/data", StaticFiles(directory=DATA_DIR), name="data")

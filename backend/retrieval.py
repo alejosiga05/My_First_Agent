@@ -199,3 +199,101 @@ def _rank(query_text: str, chunks: list[Chunk], k: int, per_file: int) -> list[C
         if len(picked[chunk.file]) < per_file:
             picked[chunk.file].append(chunk)
     return [c for f in file_order for c in picked[f]]
+
+
+# --- Fixed lists for the Housing and Clubs tabs: parsed from the files, no model ---
+
+# "## " headings in the associations list that are not topic areas.
+NOT_AREAS = {"Tips for exchange students"}
+_URL_IN_TEXT = re.compile(r"https?://[^\s()<>]+")
+
+
+def _read(path: Path) -> str | None:
+    try:
+        return Path(path).read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+
+def _source(path: Path, raw: str) -> dict:
+    return {"file": _relative(Path(path)), "title": _header(raw, "Topic") or Path(path).stem, "url": _header(raw, "Source")}
+
+
+def _sections(raw: str) -> dict[str, str]:
+    """Body under each '## ' heading, keyed by heading, in file order."""
+    parts = re.split(r"^## +(.+?)\s*$", raw, flags=re.MULTILINE)
+    return {parts[i]: parts[i + 1] for i in range(1, len(parts) - 1, 2)}
+
+
+def _bullets(text: str) -> list[str]:
+    return [m.group(1) for m in re.finditer(r"^- +(.+?)\s*$", text, re.MULTILINE)]
+
+
+def housing_websites(path: Path) -> dict:
+    """Websites from the '## Websites' section, as [{name, url}] in file order."""
+    raw = _read(path)
+    if raw is None:
+        return {"websites": [], "source": None}
+    websites = []
+    for bullet in _bullets(_sections(raw).get("Websites", "")):
+        match = re.match(r"(.+?)\s+[–-]\s+(https?://\S+?)(?:\s+[–-]\s+.*)?$", bullet)
+        if match:
+            websites.append({"name": match.group(1), "url": match.group(2)})
+    return {"websites": websites, "source": _source(path, raw)}
+
+
+def club_areas(path: Path) -> dict:
+    """Topic areas ('## ' headings, except NOT_AREAS) with their clubs, in file order."""
+    raw = _read(path)
+    if raw is None:
+        return {"areas": [], "source": None}
+    areas = [
+        {"name": name, "clubs": _bullets(body)}
+        for name, body in _sections(raw).items()
+        if name not in NOT_AREAS and _bullets(body)
+    ]
+    return {"areas": areas, "source": _source(path, raw)}
+
+
+def _line_value(text: str, key: str) -> str | None:
+    match = re.search(rf"^- +{key}:\s*(.+?)\s*$", text, re.MULTILINE)
+    return match.group(1) if match else None
+
+
+def _esn(path: Path) -> dict | None:
+    raw = _read(path)
+    if raw is None:
+        return None
+    for name, body in _sections(raw).items():
+        if not name.startswith("ESN"):
+            continue
+        website = _URL_IN_TEXT.search(_line_value(body, "Website") or "")
+        handle = re.match(r"@([A-Za-z0-9_.]+)", _line_value(body, "Instagram") or "")
+        return {
+            "name": name,
+            "website": website.group(0) if website else None,
+            # The file gives only the handle; the profile URL is built from it here, in code.
+            "instagram": {"handle": handle.group(0), "url": f"https://www.instagram.com/{handle.group(1)}"}
+            if handle
+            else None,
+            "app": _line_value(body, "App"),
+            "source": _source(path, raw),
+        }
+    return None
+
+
+def _fair(path: Path) -> dict | None:
+    raw = _read(path)
+    if raw is None:
+        return None
+    for bullet in _bullets(raw):
+        if "Associations on Display" in bullet:
+            event = _URL_IN_TEXT.search(bullet)
+            text = re.sub(r"\s*\(source:\s*https?://[^)]+\)", "", bullet)
+            return {"text": text, "event_url": event.group(0) if event else None, "source": _source(path, raw)}
+    return None
+
+
+def start_here(community_path: Path, join_path: Path) -> dict:
+    """ESN card (website, Instagram, app) and the Associations on Display fair, taken from the files."""
+    return {"esn": _esn(community_path), "fair": _fair(join_path)}
